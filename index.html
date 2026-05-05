@@ -6,7 +6,6 @@
     <title>Gestión de Gastos Familiares</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#bb86fc">
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -58,45 +57,21 @@
         .input-group i { width: 25px; color: var(--accent-color); margin-right: 10px; text-align: center; }
         label { flex: 1; font-size: 0.9rem; }
 
-        .currency-input {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .currency-input span {
-            position: absolute;
-            left: 10px;
-            color: var(--green-accent);
-            font-weight: bold;
-            pointer-events: none;
-        }
-
-        .currency-input input {
-            width: 100px;
-            text-align: right;
-            padding-left: 20px;
-        }
+        .currency-input { position: relative; display: flex; align-items: center; }
+        .currency-input span { position: absolute; left: 10px; color: var(--green-accent); font-weight: bold; pointer-events: none; }
+        .currency-input input { width: 100px; text-align: right; padding-left: 20px; }
 
         .button-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 20px; }
-
-        button {
-            padding: 12px 5px; border-radius: 10px; border: none; cursor: pointer;
-            font-weight: bold; font-size: 0.8rem;
-        }
-
+        button { padding: 12px 5px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
         .btn-save { background: var(--green-accent); color: #000; }
         .btn-history { background: var(--accent-color); color: #000; }
         .btn-print { background: #03a9f4; color: #fff; }
         .btn-add { width: 100%; background: transparent; color: var(--green-accent); border: 1px dashed; margin-top: 10px; }
 
-        .total-container {
-            margin-top: 20px; padding: 15px; background: #252525;
-            border-radius: 15px; text-align: center; border: 1px solid var(--accent-color);
-        }
-
+        .total-container { margin-top: 20px; padding: 15px; background: #252525; border-radius: 15px; text-align: center; border: 1px solid var(--accent-color); }
         #resultado { font-size: 1.8rem; font-weight: bold; color: var(--green-accent); }
 
+        /* MODAL DE HISTORIAL */
         .modal {
             display: none; position: fixed; z-index: 100; left: 0; top: 0;
             width: 100%; height: 100%; background-color: rgba(0,0,0,0.9);
@@ -108,26 +83,33 @@
             padding: 30px; width: 90%; max-width: 550px; border-radius: 10px;
         }
 
+        /* ESTILO DE RECIBO REAL */
         .recibo-card {
-            background: white; border: 2px solid #000; padding: 20px;
-            margin-bottom: 30px; position: relative;
+            background: white !important;
+            border: 2px solid #000 !important;
+            padding: 30px;
+            margin-bottom: 30px;
+            position: relative;
+            color: black !important;
+            box-shadow: none !important;
         }
 
-        .delete-recibo {
-            position: absolute; top: 10px; right: 10px; color: var(--red-cancel);
-            font-size: 1.5rem; cursor: pointer;
-        }
-
-        .recibo-header { text-align: center; border-bottom: 2px solid #000; margin-bottom: 15px; }
+        .delete-recibo { position: absolute; top: 10px; right: 10px; color: var(--red-cancel); font-size: 1.5rem; cursor: pointer; }
+        .recibo-header { text-align: center; border-bottom: 3px solid #000; margin-bottom: 20px; padding-bottom: 10px; }
         .recibo-table { width: 100%; border-collapse: collapse; }
-        .recibo-table td { padding: 8px 0; border-bottom: 1px solid #ddd; }
-        .item-total { font-weight: bold; border-top: 2px solid #000 !important; font-size: 1.2rem; }
+        .recibo-table td { padding: 12px 5px; border-bottom: 1px solid #ddd; font-size: 1.1rem; }
+        .item-total { font-weight: bold; border-top: 3px solid #000 !important; font-size: 1.4rem; }
 
+        /* CORRECCIÓN DE IMPRESIÓN */
         @media print {
-            body * { visibility: hidden; }
-            .modal, .modal * { visibility: visible; }
-            .modal { position: absolute; left: 0; top: 0; width: 100%; background: white; }
-            .delete-recibo, .close-btn-ui { display: none !important; }
+            @page { size: A4; margin: 10mm; }
+            body { background: white !important; padding: 0; margin: 0; }
+            #main-ui, .close-btn-ui, .delete-recibo { display: none !important; }
+            .modal { position: absolute; display: block; background: white !important; padding: 0; overflow: visible; }
+            .modal-content { width: 100%; max-width: 100%; margin: 0; padding: 0; background: white !important; }
+            .recibo-card { border: 2px solid black !important; width: 100%; page-break-after: always; }
+            /* Forzar colores en navegadores */
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
     </style>
 </head>
@@ -135,10 +117,9 @@
 
 <div class="container" id="main-ui">
     <select id="mes" class="mes-selector">
-        <option>Enero</option><option>Febrero</option><option>Marzo</option>
-        <option>Abril</option><option selected>Mayo</option><option>Junio</option>
-        <option>Julio</option><option>Agosto</option><option>Septiembre</option>
-        <option>Octubre</option><option>Noviembre</option><option>Diciembre</option>
+        <option>Enero</option><option>Febrero</option><option>Marzo</option><option>Abril</option>
+        <option selected>Mayo</option><option>Junio</option><option>Julio</option><option>Agosto</option>
+        <option>Septiembre</option><option>Octubre</option><option>Noviembre</option><option>Diciembre</option>
     </select>
 
     <h2>GASTOS MENSUALES</h2>
@@ -170,39 +151,27 @@
     <div class="button-grid">
         <button class="btn-save" onclick="guardarGastos()"><i class="fa-solid fa-floppy-disk"></i> GUARDAR</button>
         <button class="btn-history" onclick="mostrarHistorial()"><i class="fa-solid fa-list-check"></i> HISTORIAL</button>
-        <button class="btn-print" onclick="window.print()"><i class="fa-solid fa-print"></i> IMPRIMIR</button>
+        <button class="btn-print" onclick="prepararEImprimir()"><i class="fa-solid fa-print"></i> IMPRIMIR</button>
     </div>
 </div>
 
 <div id="modalHistorial" class="modal">
     <div class="modal-content">
-        <button class="close-btn-ui" onclick="cerrarHistorial()" style="background:var(--red-cancel); color:white; width:100%; margin-bottom:20px; border-radius:8px; padding:10px; font-weight:bold;">CERRAR HISTORIAL</button>
+        <button class="close-btn-ui" onclick="cerrarHistorial()" style="background:var(--red-cancel); color:white; width:100%; margin-bottom:20px; border-radius:8px; padding:15px; font-weight:bold; border:none; cursor:pointer;">CERRAR VENTANA</button>
         <div id="listaRecibos"></div>
     </div>
 </div>
 
 <script>
-    // Registro de PWA
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('PWA lista'))
-                .catch(err => console.log('Error PWA', err));
-        });
+        window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); });
     }
 
     function agregarItem() {
         const container = document.getElementById('extra-items');
         const div = document.createElement('div');
         div.className = 'input-group';
-        div.innerHTML = `
-            <i class="fa-solid fa-plus"></i>
-            <input type="text" class="nombre-extra" placeholder="Otro..." style="flex:1; margin-right:5px; background:transparent; border:none; border-bottom:1px dashed #555; color:white">
-            <div class="currency-input">
-                <span>$</span>
-                <input type="number" class="gasto" placeholder="0" oninput="calcularTotal()">
-            </div>
-            <i class="fa-solid fa-trash-can" style="margin-left:10px; color:var(--red-cancel); cursor:pointer" onclick="this.parentElement.remove(); calcularTotal()"></i>`;
+        div.innerHTML = `<i class="fa-solid fa-plus"></i><input type="text" class="nombre-extra" placeholder="Otro..." style="flex:1; margin-right:5px; background:transparent; border:none; border-bottom:1px dashed #555; color:white"><div class="currency-input"><span>$</span><input type="number" class="gasto" placeholder="0" oninput="calcularTotal()"></div><i class="fa-solid fa-trash-can" style="margin-left:10px; color:var(--red-cancel); cursor:pointer" onclick="this.parentElement.remove(); calcularTotal()"></i>`;
         container.appendChild(div);
     }
 
@@ -227,34 +196,36 @@
                 items.push({ nombre, monto: val });
             }
         });
-
         if (items.length === 0) return alert("Ingresa al menos un monto.");
-
         const historial = JSON.parse(localStorage.getItem('historial_completo') || '[]');
         historial.unshift({ id: Date.now(), mes, fecha: new Date().toLocaleDateString(), items, total: calcularTotal() });
         localStorage.setItem('historial_completo', JSON.stringify(historial));
-        alert("¡Recibo guardado!");
+        alert("Recibo guardado correctamente.");
     }
 
     function mostrarHistorial() {
         const historial = JSON.parse(localStorage.getItem('historial_completo') || '[]');
         const lista = document.getElementById('listaRecibos');
-        lista.innerHTML = historial.length === 0 ? "<p style='text-align:center'>No hay gastos guardados.</p>" : "";
-
+        lista.innerHTML = historial.length === 0 ? "<p style='text-align:center; color:black;'>No hay gastos guardados.</p>" : "";
         historial.forEach(rec => {
             let filas = rec.items.map(it => `<tr><td>${it.nombre}</td><td style="text-align:right">$ ${it.monto.toLocaleString('es-AR')}</td></tr>`).join('');
-            lista.innerHTML += `
-                <div class="recibo-card" id="rec-${rec.id}">
-                    <i class="fa-solid fa-circle-xmark delete-recibo" onclick="borrarRegistro(${rec.id})"></i>
-                    <div class="recibo-header"><h3>RECIBO: ${rec.mes.toUpperCase()}</h3><p>${rec.fecha}</p></div>
-                    <table class="recibo-table">${filas}<tr class="item-total"><td>TOTAL</td><td style="text-align:right">$ ${rec.total.toLocaleString('es-AR')}</td></tr></table>
-                </div>`;
+            lista.innerHTML += `<div class="recibo-card" id="rec-${rec.id}"><i class="fa-solid fa-circle-xmark delete-recibo" onclick="borrarRegistro(${rec.id})"></i><div class="recibo-header"><h1>RECIBO DE GASTOS</h1><p style="font-size:1.2rem;"><b>MES: ${rec.mes.toUpperCase()}</b></p><p>Fecha: ${rec.fecha}</p></div><table class="recibo-table">${filas}<tr class="item-total"><td>TOTAL GENERAL</td><td style="text-align:right">$ ${rec.total.toLocaleString('es-AR')}</td></tr></table><p style="text-align:center; margin-top:30px; font-size:0.8rem; border-top:1px solid #000; padding-top:10px;">Documento de control de finanzas familiares.</p></div>`;
         });
         document.getElementById('modalHistorial').style.display = "block";
     }
 
+    function prepararEImprimir() {
+        // Si el historial no está abierto, lo abrimos para que haya algo que imprimir
+        if (document.getElementById('modalHistorial').style.display !== "block") {
+            mostrarHistorial();
+            setTimeout(() => { window.print(); }, 500);
+        } else {
+            window.print();
+        }
+    }
+
     function borrarRegistro(id) {
-        if (!confirm("¿Eliminar este registro?")) return;
+        if (!confirm("¿Eliminar este recibo?")) return;
         let historial = JSON.parse(localStorage.getItem('historial_completo') || '[]');
         historial = historial.filter(r => r.id !== id);
         localStorage.setItem('historial_completo', JSON.stringify(historial));
