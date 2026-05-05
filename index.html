@@ -71,7 +71,7 @@
         .total-container { margin-top: 20px; padding: 15px; background: #252525; border-radius: 15px; text-align: center; border: 1px solid var(--accent-color); }
         #resultado { font-size: 1.8rem; font-weight: bold; color: var(--green-accent); }
 
-        /* MODAL DE HISTORIAL */
+        /* VENTANA HISTORIAL */
         .modal {
             display: none; position: fixed; z-index: 100; left: 0; top: 0;
             width: 100%; height: 100%; background-color: rgba(0,0,0,0.9);
@@ -80,37 +80,43 @@
 
         .modal-content {
             background-color: #f5f5f5; color: black; margin: auto;
-            padding: 30px; width: 90%; max-width: 550px; border-radius: 10px;
+            padding: 20px; width: 95%; max-width: 500px; border-radius: 10px;
         }
 
-        /* ESTILO DE RECIBO */
+        /* DISEÑO DEL RECIBO DENTRO DEL HISTORIAL */
         .recibo-card {
             background: white !important;
             border: 2px solid #000 !important;
-            padding: 30px;
-            margin-bottom: 30px;
+            padding: 20px;
+            margin-bottom: 25px;
             position: relative;
             color: black !important;
+            width: 100%;
+            box-sizing: border-box;
         }
 
-        .actions-recibo { position: absolute; top: 10px; right: 10px; display: flex; gap: 15px; }
-        .delete-recibo { color: var(--red-cancel); font-size: 1.4rem; cursor: pointer; }
-        .print-recibo-btn { color: #03a9f4; font-size: 1.4rem; cursor: pointer; }
+        .actions-recibo { 
+            position: absolute; top: 10px; right: 10px; 
+            display: flex; gap: 20px; background: white; padding: 5px;
+        }
+        
+        .delete-recibo { color: var(--red-cancel); font-size: 1.6rem; cursor: pointer; }
+        .print-recibo-btn { color: #03a9f4; font-size: 1.6rem; cursor: pointer; }
 
-        .recibo-header { text-align: center; border-bottom: 3px solid #000; margin-bottom: 20px; padding-bottom: 10px; }
+        .recibo-header { text-align: center; border-bottom: 2px solid #000; margin-bottom: 15px; padding-bottom: 10px; }
         .recibo-table { width: 100%; border-collapse: collapse; }
-        .recibo-table td { padding: 12px 5px; border-bottom: 1px solid #ddd; font-size: 1.1rem; }
-        .item-total { font-weight: bold; border-top: 3px solid #000 !important; font-size: 1.4rem; }
+        .recibo-table td { padding: 8px 5px; border-bottom: 1px solid #ddd; font-size: 1rem; }
+        .item-total { font-weight: bold; border-top: 2px solid #000 !important; font-size: 1.2rem; }
 
-        /* CONFIGURACIÓN DE IMPRESIÓN */
+        /* AJUSTES DE IMPRESIÓN */
         @media print {
             @page { size: A4; margin: 10mm; }
-            body { background: white !important; }
+            body { background: white !important; margin: 0; padding: 0; }
             #main-ui, .close-btn-ui, .actions-recibo { display: none !important; }
-            .modal { position: absolute; display: block; background: white !important; padding: 0; overflow: visible; }
-            .modal-content { width: 100%; max-width: 100%; margin: 0; padding: 0; background: white !important; }
-            .recibo-card { border: 2px solid black !important; margin-bottom: 0; page-break-after: avoid; }
-            .no-print { display: none !important; } /* Oculta otros recibos al imprimir uno solo */
+            .modal { position: static; display: block; background: white !important; }
+            .modal-content { width: 100%; max-width: 100%; margin: 0; padding: 0; background: white !important; box-shadow: none; }
+            .recibo-card { border: 2px solid black !important; width: 100% !important; margin-bottom: 30px !important; }
+            .no-print { display: none !important; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
     </style>
@@ -153,23 +159,18 @@
     <div class="button-grid">
         <button class="btn-save" onclick="guardarGastos()"><i class="fa-solid fa-floppy-disk"></i> GUARDAR</button>
         <button class="btn-history" onclick="mostrarHistorial()"><i class="fa-solid fa-list-check"></i> HISTORIAL</button>
-        <button class="btn-print" onclick="window.print()"><i class="fa-solid fa-print"></i> IMPRIMIR</button>
+        <button class="btn-print" onclick="prepararEImprimirTodo()"><i class="fa-solid fa-print"></i> IMPRIMIR</button>
     </div>
 </div>
 
 <div id="modalHistorial" class="modal">
     <div class="modal-content">
-        <button class="close-btn-ui" onclick="cerrarHistorial()" style="background:var(--red-cancel); color:white; width:100%; margin-bottom:20px; border-radius:8px; padding:15px; font-weight:bold; border:none; cursor:pointer;">VOLVER AL INICIO</button>
+        <button class="close-btn-ui" onclick="cerrarHistorial()" style="background:var(--red-cancel); color:white; width:100%; margin-bottom:20px; border-radius:8px; padding:15px; font-weight:bold; border:none; cursor:pointer;">CERRAR Y VOLVER</button>
         <div id="listaRecibos"></div>
     </div>
 </div>
 
 <script>
-    // Registro Service Worker PWA
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); });
-    }
-
     function agregarItem() {
         const container = document.getElementById('extra-items');
         const div = document.createElement('div');
@@ -199,28 +200,44 @@
                 items.push({ nombre, monto: val });
             }
         });
-        if (items.length === 0) return alert("Ingresa al menos un monto.");
+        if (items.length === 0) return alert("Ingresa algún monto primero.");
         const historial = JSON.parse(localStorage.getItem('historial_completo') || '[]');
         historial.unshift({ id: Date.now(), mes, fecha: new Date().toLocaleDateString(), items, total: calcularTotal() });
         localStorage.setItem('historial_completo', JSON.stringify(historial));
-        alert("¡Recibo guardado con éxito!");
+        alert("Recibo guardado en el historial.");
     }
 
     function mostrarHistorial() {
         const historial = JSON.parse(localStorage.getItem('historial_completo') || '[]');
         const lista = document.getElementById('listaRecibos');
-        lista.innerHTML = historial.length === 0 ? "<p style='text-align:center; color:black;'>No hay gastos guardados.</p>" : "";
+        lista.innerHTML = historial.length === 0 ? "<p style='text-align:center;'>No hay registros guardados.</p>" : "";
+
         historial.forEach(rec => {
             let filas = rec.items.map(it => `<tr><td>${it.nombre}</td><td style="text-align:right">$ ${it.monto.toLocaleString('es-AR')}</td></tr>`).join('');
-            lista.innerHTML += `
-                <div class="recibo-card" id="rec-${rec.id}">
-                    <div class="actions-recibo">
-                        <i class="fa-solid fa-print print-recibo-btn" title="Imprimir este recibo" onclick="imprimirUno(${rec.id})"></i>
-                        <i class="fa-solid fa-trash-can delete-recibo" title="Borrar" onclick="borrarRegistro(${rec.id})"></i>
-                    </div>
-                    <div class="recibo-header"><h1>RECIBO DE GASTOS</h1><p style="font-size:1.2rem;"><b>MES: ${rec.mes.toUpperCase()}</b></p><p>Fecha: ${rec.fecha}</p></div>
-                    <table class="recibo-table">${filas}<tr class="item-total"><td>TOTAL GENERAL</td><td style="text-align:right">$ ${rec.total.toLocaleString('es-AR')}</td></tr></table>
-                </div>`;
+            
+            // Creación manual del contenido para asegurar que el botón de imprimir esté presente
+            const card = document.createElement('div');
+            card.className = 'recibo-card';
+            card.id = `rec-${rec.id}`;
+            card.innerHTML = `
+                <div class="actions-recibo">
+                    <i class="fa-solid fa-print print-recibo-btn" onclick="imprimirUno(${rec.id})" title="Imprimir este recibo"></i>
+                    <i class="fa-solid fa-trash-can delete-recibo" onclick="borrarRegistro(${rec.id})" title="Eliminar"></i>
+                </div>
+                <div class="recibo-header">
+                    <h1>RECIBO DE GASTOS</h1>
+                    <p style="font-size:1.1rem;"><b>MES: ${rec.mes.toUpperCase()}</b></p>
+                    <p>Fecha: ${rec.fecha}</p>
+                </div>
+                <table class="recibo-table">
+                    ${filas}
+                    <tr class="item-total">
+                        <td>TOTAL GENERAL</td>
+                        <td style="text-align:right">$ ${rec.total.toLocaleString('es-AR')}</td>
+                    </tr>
+                </table>
+            `;
+            lista.appendChild(card);
         });
         document.getElementById('modalHistorial').style.display = "block";
     }
@@ -236,15 +253,26 @@
         }, 1000);
     }
 
+    function prepararEImprimirTodo() {
+        if (document.getElementById('modalHistorial').style.display !== "block") {
+            mostrarHistorial();
+            setTimeout(() => { window.print(); }, 500);
+        } else {
+            window.print();
+        }
+    }
+
     function borrarRegistro(id) {
-        if (!confirm("¿Eliminar este recibo?")) return;
+        if (!confirm("¿Seguro que quieres borrar este recibo?")) return;
         let historial = JSON.parse(localStorage.getItem('historial_completo') || '[]');
         historial = historial.filter(r => r.id !== id);
         localStorage.setItem('historial_completo', JSON.stringify(historial));
         mostrarHistorial();
     }
 
-    function cerrarHistorial() { document.getElementById('modalHistorial').style.display = "none"; }
+    function cerrarHistorial() { 
+        document.getElementById('modalHistorial').style.display = "none"; 
+    }
 </script>
 </body>
 </html>
