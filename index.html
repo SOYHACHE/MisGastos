@@ -102,7 +102,7 @@
         .recibo-table td { padding: 12px 5px; border-bottom: 1px solid #ddd; font-size: 1.1rem; }
         .item-total { font-weight: bold; border-top: 3px solid #000 !important; font-size: 1.4rem; }
 
-        /* IMPRESIÓN */
+        /* CONFIGURACIÓN DE IMPRESIÓN */
         @media print {
             @page { size: A4; margin: 10mm; }
             body { background: white !important; }
@@ -110,7 +110,7 @@
             .modal { position: absolute; display: block; background: white !important; padding: 0; overflow: visible; }
             .modal-content { width: 100%; max-width: 100%; margin: 0; padding: 0; background: white !important; }
             .recibo-card { border: 2px solid black !important; margin-bottom: 0; page-break-after: avoid; }
-            .no-print { display: none !important; } /* Clase para ocultar otros recibos */
+            .no-print { display: none !important; } /* Oculta otros recibos al imprimir uno solo */
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
     </style>
@@ -153,7 +153,7 @@
     <div class="button-grid">
         <button class="btn-save" onclick="guardarGastos()"><i class="fa-solid fa-floppy-disk"></i> GUARDAR</button>
         <button class="btn-history" onclick="mostrarHistorial()"><i class="fa-solid fa-list-check"></i> HISTORIAL</button>
-        <button class="btn-print" onclick="prepararEImprimirTodo()"><i class="fa-solid fa-print"></i> IMPRIMIR</button>
+        <button class="btn-print" onclick="window.print()"><i class="fa-solid fa-print"></i> IMPRIMIR</button>
     </div>
 </div>
 
@@ -165,6 +165,7 @@
 </div>
 
 <script>
+    // Registro Service Worker PWA
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); });
     }
@@ -202,7 +203,7 @@
         const historial = JSON.parse(localStorage.getItem('historial_completo') || '[]');
         historial.unshift({ id: Date.now(), mes, fecha: new Date().toLocaleDateString(), items, total: calcularTotal() });
         localStorage.setItem('historial_completo', JSON.stringify(historial));
-        alert("¡Recibo guardado!");
+        alert("¡Recibo guardado con éxito!");
     }
 
     function mostrarHistorial() {
@@ -230,19 +231,9 @@
             if (r.id !== `rec-${id}`) r.classList.add('no-print');
         });
         window.print();
-        // Restaurar vista después de imprimir
         setTimeout(() => {
             recibos.forEach(r => r.classList.remove('no-print'));
         }, 1000);
-    }
-
-    function prepararEImprimirTodo() {
-        if (document.getElementById('modalHistorial').style.display !== "block") {
-            mostrarHistorial();
-            setTimeout(() => { window.print(); }, 500);
-        } else {
-            window.print();
-        }
     }
 
     function borrarRegistro(id) {
